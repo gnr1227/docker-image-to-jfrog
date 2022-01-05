@@ -1,27 +1,41 @@
 pipeline {
-    agent none
-    stages {
-        stage("Checkout") {
-            agent any
-            steps {
-                Checkout([$class: 'GitSCM',
-                branches: [[name: 'origin/main']],
-                userRemoteConfigs: [[
-                    url: "https://github.com/gnr1227/docker-image-to-jfrog.git"
-                ]]
-                ])
+  environment {
+    imagename = "gnr1227/centos-image"
+    registryCredential = 'docker-hub'
+    dockerImage = ''
+  }
+  agent any
+  stages {
+    stage('Cloning Git') {
+      steps {
+        git([url: 'https://github.com/gnr1227/docker-image-to-jfrog.git', branch: 'main', credentialsId: 'c6adfdfd-92b3-45d7-83f5-1610a564eefc'])
 
-            }
-        }
-        stage("Build") {
-            agent {
-                dockerfile true
-            }
-            steps {
-                echo "Hello Narendra"
-                sh 'hostname'
-            }
-        }
+      }
     }
-}
+    stage('Building image') {
+      steps{
+        script {
+          dockerImage = docker.build jenins-docker-image
+        }
+      }
+    }
+    stage('Deploy Image') {
+      steps{
+        script {
+          docker.withRegistry( '', registryCredential ) {
+            dockerImage.push("$BUILD_NUMBER")
+             dockerImage.push('latest')
 
+          }
+        }
+      }
+    }
+    stage('Remove Unused docker image') {
+      steps{
+        sh "docker rmi $imagename:$BUILD_NUMBER"
+         sh "docker rmi $imagename:latest"
+
+      }
+    }
+  }
+}
