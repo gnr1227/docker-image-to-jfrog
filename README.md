@@ -1,3 +1,5 @@
 # docker-image-to-jfrog
 
-added
+adde
+
+##configured hithub hooks
