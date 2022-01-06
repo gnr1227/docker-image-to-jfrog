@@ -6,3 +6,5 @@ WORKDIR /tmp
 
 ENV name "Narendra"
 
+ENV Age 30
+
